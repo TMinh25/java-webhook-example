@@ -184,11 +184,12 @@ public class ListenController {
         }
 
         request.setUri(messageUri);
-        final Message message = graphClient.getRequestAdapter().send(request, null,
-                Message::createFromDiscriminatorValue);
+        ChatMessage chatMessage;
+        final ChatMessage message = graphClient.getRequestAdapter().send(request, null,
+                ChatMessage::createFromDiscriminatorValue);
         if (message != null)
             socketIONamespace.getRoomOperations(subscription.subscriptionId)
-                    .sendEvent("notificationReceived", new NewMessageNotification(message));
+                    .sendEvent("notificationReceived", new NewChatMessageNotification(message));
     }
 
 

@@ -68,18 +68,31 @@ public class WatchController {
                     GraphClientHelper.getGraphClient(Objects.requireNonNull(oauthClient));
 
             // Get the authenticated user's info
-            final var user = graphClient.me().get(config -> {
-                config.queryParameters.select = new String[] { "displayName", "mail", "userPrincipalName" };
-            });
+            final var user = graphClient.me().get();
+            var existingSubscriptions = subscriptionStore.getSubscriptionsForUser(user.getId());
+            if (existingSubscriptions.size() > 0) {
+                for (final var sub : existingSubscriptions) {
+
+                    graphClient.subscriptions().bySubscriptionId(sub.subscriptionId).delete();
+                }
+            } else {
+                existingSubscriptions = graphClient.subscriptions().get().getValue().stream().map(SubscriptionRecord::new).toList();
+                if (existingSubscriptions.size() > 0) {
+                    for (final var sub : existingSubscriptions) {
+
+                        graphClient.subscriptions().bySubscriptionId(sub.subscriptionId).delete();
+                    }
+                }
+            }
 
             // Create the subscription
             final var subscriptionRequest = new Subscription();
             subscriptionRequest.setChangeType("created");
             subscriptionRequest.setNotificationUrl(notificationHost + "/listen");
-            subscriptionRequest.setResource("me/mailfolders/inbox/messages");
+            subscriptionRequest.setResource("/users/" + user.getId() + "/chats/getAllMessages");
             subscriptionRequest.setClientState(UUID.randomUUID().toString());
             subscriptionRequest.setIncludeResourceData(false);
-            subscriptionRequest.setExpirationDateTime(OffsetDateTime.now().plusHours(1));
+            subscriptionRequest.setExpirationDateTime(OffsetDateTime.now().plusMinutes(59));
 
             final Subscription subscription = graphClient.subscriptions().post(subscriptionRequest);
 
@@ -131,20 +144,30 @@ public class WatchController {
 
             // Apps are only allowed one subscription to the /teams/getAllMessages resource
             // If we already had one, delete it so we can create a new one
-            final var existingSubscriptions = subscriptionStore.getSubscriptionsForUser(APP_ONLY);
-            for (final var sub : existingSubscriptions) {
+            var existingSubscriptions = subscriptionStore.getSubscriptionsForUser(APP_ONLY);
+            if (existingSubscriptions.size() > 0) {
+                for (final var sub : existingSubscriptions) {
 
-                graphClient.subscriptions().bySubscriptionId(sub.subscriptionId).delete();
+                    graphClient.subscriptions().bySubscriptionId(sub.subscriptionId).delete();
+                }
+            } else {
+                existingSubscriptions = graphClient.subscriptions().get().getValue().stream().map(SubscriptionRecord::new).toList();
+                if (existingSubscriptions.size() > 0) {
+                    for (final var sub : existingSubscriptions) {
+
+                        graphClient.subscriptions().bySubscriptionId(sub.subscriptionId).delete();
+                    }
+                }
             }
 
             // Create the subscription
             final var subscriptionRequest = new Subscription();
             subscriptionRequest.setChangeType("created");
             subscriptionRequest.setNotificationUrl(notificationHost + "/listen");
-            subscriptionRequest.setResource("/teams/getAllMessages");
+            subscriptionRequest.setResource("/chats/getAllMessages");
             subscriptionRequest.setClientState(UUID.randomUUID().toString());
             subscriptionRequest.setIncludeResourceData(true);
-            subscriptionRequest.setExpirationDateTime(OffsetDateTime.now().plusHours(1));
+            subscriptionRequest.setExpirationDateTime(OffsetDateTime.now().plusMinutes(59));
             subscriptionRequest.setEncryptionCertificate(certificateStore.getBase64EncodedCertificate());
             subscriptionRequest.setEncryptionCertificateId(certificateStore.getCertificateId());
 

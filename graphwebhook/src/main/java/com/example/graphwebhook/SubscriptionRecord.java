@@ -3,6 +3,7 @@
 
 package com.example.graphwebhook;
 
+import com.microsoft.graph.models.Subscription;
 import jakarta.annotation.Nonnull;
 import org.springframework.lang.NonNull;
 
@@ -33,5 +34,11 @@ public class SubscriptionRecord {
         this.subscriptionId = subscriptionId;
         this.userId = userId;
         this.clientState = clientState;
+    }
+
+    public SubscriptionRecord(Subscription subscription) {
+        this.subscriptionId = subscription.getId();
+        this.userId = subscription.getCreatorId();
+        this.clientState = subscription.getClientState();
     }
 }

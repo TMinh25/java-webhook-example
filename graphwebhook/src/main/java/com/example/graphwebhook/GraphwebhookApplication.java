@@ -21,7 +21,7 @@ public class GraphwebhookApplication {
     public SocketIOServer socketIOServer() {
         var config = new Configuration();
         config.setHostname("localhost");
-        config.setPort(8081);
+        config.setPort(8888);
         return new SocketIOServer(config);
     }
 
